@@ -1,9 +1,9 @@
 ---
 title: "Lab 6"
-author: "Insert Name"
+author: "Cameron Adams"
 date: "Math 241, Week 8"
 output:
-  pdf_document
+  html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -33,6 +33,18 @@ For this problem we will return to the biketown dataset.
 
 a. Grab the code from activity 9, Problem 1 to read the data directly from Biketown's API- make sure to keep the longitude and latitude of the start of each ride (`StartLatitude`, `StartLongitude`).
 
+```{r}
+biketown_data <- bind_rows(readr::read_csv("https://s3.amazonaws.com/biketown-tripdata-public/2017_01.csv"),
+                           readr::read_csv("https://s3.amazonaws.com/biketown-tripdata-public/2017_07.csv"),
+                           readr::read_csv("https://s3.amazonaws.com/biketown-tripdata-public/2017_11.csv")) %>%
+  
+
+  select(StartDate, StartTime, EndDate, EndTime, Distance_Miles,
+         BikeID, StartLongitude, StartLatitude )
+
+```
+
+
 b. Create an interactive map of the start point of the rides using the `leaflet` package.  Make sure to include a legend and a title.  What do you notice about the distribution of rides?
 ```{r}
 biketown_data %>% 
@@ -42,18 +54,90 @@ biketown_data %>%
 ```
 
 
+Here we can see that the bulk of the rides start in the very center of the portland with a slighty denser amount on the west side of the river
+
+
 c. Using the `lubridate` package, create a variable, `month`, indicating the month of each variable.
 
 Add this variable to your interactive map using color.  Make sure to include a legend and be mindful of your color palette choice.  Do ride locations vary by months of the year?
+```{r}
+biketown_data <- biketown_data %>%
+  mutate(month = month(ymd_hms(EndDate)))
+```
+
+
+```{r}
+
+
+biketown_data$EndDate <- mdy(biketown_data$EndDate)
+
+biketown_data <- biketown_data %>%
+  mutate(month = month(EndDate))
+
+month_palette <- colorFactor(palette = "Set3", domain = unique(biketown_data$month))
+
+biketown_data %>% 
+  leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(lng = ~StartLongitude, lat = ~StartLatitude, 
+                   fillColor = ~month_palette(month),
+                   color = "white", radius = 5, opacity = 1) %>%
+  addLegend(position = "bottomright", 
+            colors = month_palette(unique(biketown_data$month)), 
+            labels = month.abb[unique(biketown_data$month)],
+            title = "Month")
+
+```
 
 ### Problem 2: Choropleth Maps
 
 For this problem, I want you to practice creating choropleth maps.  Let's grab some data using `tidycensus`.  Remember that you will have to set up an [API key](https://api.census.gov/data/key_signup.html).
 
 ```{r, eval = FALSE}
-api_key <- "insert key"
+api_key <-  "94a98843fc99d4851ad1aafc71cddde2bfb1385b"
 ```
 
 a. Let's grab data on the median gross rent (`B25064_001`) from the American Community Survey for Multnomah county, Oregon.  I want you to do data pulls at three geography resolutions: county subdivision, tract, and block group.
 
+```{r}
+
+county_subdivision_data <- get_acs(geography = "county subdivision",
+                                   variables = "B25064_001",
+                                   state = "OR", county = "Multnomah" )
+
+tract_data <- get_acs(geography = "tract",
+                      variables = "B25064_001",
+                      state = "OR", county = "Multnomah")
+
+block_group_data <- get_acs(geography = "block group",
+                            variables = "B25064_001",
+                            state = "OR", county = "Multnomah")
+```
+
+
 b. Create three choropleth maps of gross rent, one for each geography resolution.  What information can we glean from these maps?  Also, which resolution seems most useful for this variable?  Justify your answer.
+
+```{r}
+
+
+ggplot() +
+  geom_sf(data = county_subdivision_data, aes(fill = estimate)) +
+  scale_fill_viridis_c() +
+  labs(title = "Median Gross Rent at County Subdivision Level")
+
+ggplot() +
+  geom_sf(data = tract_data, aes(fill = estimate)) +
+  scale_fill_viridis_c() +
+  labs(title = "Median Gross Rent at Tract Level")
+
+ggplot() +
+  geom_sf(data = block_group_data, aes(fill = estimate)) +
+  scale_fill_viridis_c() +
+  labs(title = "Median Gross Rent at Block Group Level")
+
+```
+
+
+```
+
+
