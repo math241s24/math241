@@ -3,8 +3,11 @@ title: "Lab 6"
 author: "Cameron Adams"
 date: "Math 241, Week 8"
 output:
-  html_document
+  pdf_document:
+    keep_tex: true
+
 ---
+
 
 ```{r setup, include=FALSE}
 # Do not modify this chunk.
@@ -16,6 +19,16 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(leaflet)
 library(tidycensus)
+library(tidyverse)
+library(tidycensus)
+library(flextable)
+library(sf)
+library(tigris)
+library(tmap)
+library(RColorBrewer)
+
+
+
 ```
 
 
@@ -46,7 +59,7 @@ biketown_data <- bind_rows(readr::read_csv("https://s3.amazonaws.com/biketown-tr
 
 
 b. Create an interactive map of the start point of the rides using the `leaflet` package.  Make sure to include a legend and a title.  What do you notice about the distribution of rides?
-```{r}
+```{r, eval = FALSE}
 biketown_data %>% 
   leaflet() %>%
   addTiles() %>%
@@ -60,14 +73,13 @@ Here we can see that the bulk of the rides start in the very center of the portl
 c. Using the `lubridate` package, create a variable, `month`, indicating the month of each variable.
 
 Add this variable to your interactive map using color.  Make sure to include a legend and be mindful of your color palette choice.  Do ride locations vary by months of the year?
-```{r}
+```{r, eval = FALSE}
 biketown_data <- biketown_data %>%
   mutate(month = month(ymd_hms(EndDate)))
 ```
 
 
-```{r}
-
+```{r, eval = FALSE}
 
 biketown_data$EndDate <- mdy(biketown_data$EndDate)
 
@@ -87,8 +99,10 @@ biketown_data %>%
             labels = month.abb[unique(biketown_data$month)],
             title = "Month")
 
+
 ```
 
+overall the locations dont seem to differ by month
 ### Problem 2: Choropleth Maps
 
 For this problem, I want you to practice creating choropleth maps.  Let's grab some data using `tidycensus`.  Remember that you will have to set up an [API key](https://api.census.gov/data/key_signup.html).
@@ -99,45 +113,67 @@ api_key <-  "94a98843fc99d4851ad1aafc71cddde2bfb1385b"
 
 a. Let's grab data on the median gross rent (`B25064_001`) from the American Community Survey for Multnomah county, Oregon.  I want you to do data pulls at three geography resolutions: county subdivision, tract, and block group.
 
+
+
+
 ```{r}
 
-county_subdivision_data <- get_acs(geography = "county subdivision",
-                                   variables = "B25064_001",
-                                   state = "OR", county = "Multnomah" )
+subdiv <- get_acs(
+  geography = "county subdivision", # Correct geography level for county data
+  variables = "B25064_001", # Median gross rent
+  survey = "acs5", 
+  state = "OR",
+  county = "Multnomah", # Correct argument name is 'county'
+  year = 2021,
+  geometry = TRUE)
 
-tract_data <- get_acs(geography = "tract",
-                      variables = "B25064_001",
-                      state = "OR", county = "Multnomah")
+tract <- get_acs(
+  geography = "tract", # Correct geography level for county data
+  variables = "B25064_001", # Median gross rent
+  survey = "acs5", 
+  state = "OR",
+  county = "Multnomah", # Correct argument name is 'county'
+  year = 2021,
+  geometry = TRUE)
 
-block_group_data <- get_acs(geography = "block group",
-                            variables = "B25064_001",
-                            state = "OR", county = "Multnomah")
+block_group <- get_acs(
+  geography = "block group", # Correct geography level for county data
+  variables = "B25064_001", # Median gross rent
+  survey = "acs5", 
+  state = "OR",
+  county = "Multnomah", # Correct argument name is 'county'
+  year = 2021,
+  geometry = TRUE)
 ```
+
 
 
 b. Create three choropleth maps of gross rent, one for each geography resolution.  What information can we glean from these maps?  Also, which resolution seems most useful for this variable?  Justify your answer.
 
 ```{r}
+subdiv %>%
+  st_as_sf() %>%
+    ggplot() +
+    geom_sf(aes(fill = estimate)) +
+    scale_fill_viridis_c() +
+    labs(fill = "Median Gross Rent") +
+    theme_void()
 
+tract %>%
+  st_as_sf() %>%
+    ggplot() +
+    geom_sf(aes(fill = estimate)) +
+    scale_fill_viridis_c() +
+    labs(fill = "Median Gross Rent") +
+    theme_void()
 
-ggplot() +
-  geom_sf(data = county_subdivision_data, aes(fill = estimate)) +
-  scale_fill_viridis_c() +
-  labs(title = "Median Gross Rent at County Subdivision Level")
-
-ggplot() +
-  geom_sf(data = tract_data, aes(fill = estimate)) +
-  scale_fill_viridis_c() +
-  labs(title = "Median Gross Rent at Tract Level")
-
-ggplot() +
-  geom_sf(data = block_group_data, aes(fill = estimate)) +
-  scale_fill_viridis_c() +
-  labs(title = "Median Gross Rent at Block Group Level")
-
-```
-
-
+block_group %>%
+  st_as_sf() %>%
+    ggplot() +
+    geom_sf(aes(fill = estimate)) +
+    scale_fill_viridis_c() +
+    labs(fill = "Median Gross Rent") +
+    theme_void()
 ```
 
 

@@ -34,9 +34,15 @@ library(janeaustenr)
 The **janeaustenr** package offers a function, `austen_books()`, that returns a tidy data frame of Jane Austen's 6 completed, published novels.
 
 ```{r}
+
 #| label: get-data
 
-# add code here
+
+# Get data
+austen_books <- austen_books()
+
+
+
 ```
 
 -   **Demo:** Which books are included in the dataset?
@@ -44,7 +50,24 @@ The **janeaustenr** package offers a function, `austen_books()`, that returns a 
 ```{r}
 #| label: books
 
-# add code here
+
+books <- austen_books %>%
+  distinct(book)
+
+
+
+word_tokens <- austen_books %>%
+  unnest_tokens(word, text)
+
+
+top_words <- word_tokens %>%
+  count(book, word, sort = TRUE) %>%
+  group_by(book) %>%
+  top_n(10) %>%
+  ungroup()
+
+top_words
+
 ```
 
 # Word frequencies
@@ -56,7 +79,10 @@ The **janeaustenr** package offers a function, `austen_books()`, that returns a 
 ```{r}
 #| label: words
 
-# add code here
+word_tokens <- austen_books %>%
+  unnest_tokens(word, text)
+
+
 ```
 
 -   **Your turn:** Discover the top 10 most commonly used words in each of Jane Austen's books.
@@ -66,7 +92,13 @@ With stop words:
 ```{r}
 #| label: top-words
 
-# add code here
+top_words <- word_tokens %>%
+  count(book, word, sort = TRUE) %>%
+  group_by(book) %>%
+  top_n(10) %>%
+  ungroup()
+
+top_words
 ```
 
 -   **Demo:** Let's do better, without the "stop words".
