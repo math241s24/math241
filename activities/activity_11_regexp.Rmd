@@ -26,12 +26,18 @@ a. Find all of the adjectives in Macbeth that end in more or less
 ```{r}
 data(Macbeth_raw)
 
+adjectives_more_less <- str_extract_all(Macbeth_raw, "\\b\\w+(?:more|less)\\b", simplify = TRUE)
+adjectives_more_less <- unique(adjectives_more_less)
+print(adjectives_more_less)
+
 ```
 
 
 b. Find all of the lines containing the stage direction Exit or Exeunt.
 
 ```{r}
+exit_lines <- grep("\\bExit\\b|\\bExeunt\\b", Macbeth_raw, value = TRUE)
+print(exit_lines)
 
 ```
 
