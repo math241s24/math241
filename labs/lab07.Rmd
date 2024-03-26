@@ -162,10 +162,8 @@ Notes:
 babynames_lower <- babynames %>%
   mutate(name = tolower(name))
 
-# extract words
 numbers_words <- c("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 
-# Extract the desired word from each name
 extracted_numbers <- sapply(numbers_words, function(word) {
   count <- babynames_lower %>%
     filter(str_detect(name, paste0("\\b", word, "\\b"))) %>%
@@ -174,10 +172,8 @@ extracted_numbers <- sapply(numbers_words, function(word) {
   return(count)
 })
 
-# Create a table with the counts
 numbers_table <- data.frame(Number = numbers_words, Count = extracted_numbers)
 
-# Print the table
 print(numbers_table)
 
 ```
