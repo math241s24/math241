@@ -57,8 +57,14 @@ data("babynames")
 a. For 2000, find the ten most popular female baby names that start with the letter Z.
 
 ```{r, eval = FALSE}
-#Hint: Use 
-top_n(___)
+female_names_2000_Z <- babynames %>%
+  filter(year == 2000, sex == "F", startsWith(name, "Z"))
+
+top_female_names_2000_Z <- female_names_2000_Z %>%
+  arrange(desc(n)) %>%
+  top_n(10)
+
+top_female_names_2000_Z
 ```
 
 
@@ -66,19 +72,74 @@ top_n(___)
 
 b. For 2000, find the ten most popular female baby names that contain the letter z.  
 
+```{r}
+female_names_2000_C_Z <- babynames %>%
+  filter(year == 2000, sex == "F", str_detect(name, "z")|startsWith(name, "Z")|str_sub(name, -1) == "z")
+
+top_female_names_2000_C_Z <- female_names_2000_C_Z %>%
+  arrange(desc(n)) %>%
+  top_n(10)
+
+top_female_names_2000_C_Z
+```
+
 
 
 c. For 2000, find the ten most popular female baby names that end in the letter z. 
+
+```{r}
+female_names_2000_end_Z <- babynames %>%
+  filter(year == 2000, sex == "F", str_sub(name, -1) == "z")
+
+top_female_names_2000_end_Z <- female_names_2000_end_Z %>%
+  arrange(desc(n)) %>%
+  top_n(10)
+
+top_female_names_2000_end_Z
+```
 
 
 d. Between your three tables in 1.a - 1.c, do any of the names show up on more than one list?  If so, which ones? (Yes, I know you could do this visually but use some joins!)
 
 
+```{r}
+# Perform inner joins between the tables
+joined_tables1 <- inner_join(top_female_names_2000_Z, top_female_names_2000_C_Z, by = "name") 
+
+joined_tables2 <- inner_join(top_female_names_2000_Z, top_female_names_2000_end_Z, by = "name")
+
+joined_tables3 <- inner_join(top_female_names_2000_end_Z, top_female_names_2000_C_Z, by = "name") 
+# Select the common names
+common_names1 <- joined_tables1$name
+common_names2 <- joined_tables2$name
+common_names3 <- joined_tables3$name
 
 
+# Print the common names
+common_names1
+common_names2
+common_names3
+
+```
+
+From here we can see Zoe is the only one that is shared between lists.
 
 
 e.  Verify that none of the baby names contain a numeric (0-9) in them.
+
+```{r}
+names_with_numeric <- babynames %>%
+  filter(str_detect(name, "[0-9]")) %>%
+  pull(name)
+
+if (length(names_with_numeric) > 0) {
+  cat("Baby names containing numeric digits:\n")
+  cat(names_with_numeric, sep = "\n")
+} else {
+  print("No baby names contain numeric digits.")
+}
+
+```
 
 
 
@@ -95,12 +156,40 @@ Notes:
     2. Add a column that contains the desired word.  
 
 
+```{r}
+
+#lowercase
+babynames_lower <- babynames %>%
+  mutate(name = tolower(name))
+
+# extract words
+numbers_words <- c("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+# Extract the desired word from each name
+extracted_numbers <- sapply(numbers_words, function(word) {
+  count <- babynames_lower %>%
+    filter(str_detect(name, paste0("\\b", word, "\\b"))) %>%
+    summarise(count = n())
+  count <- ifelse(is.na(count$count), 0, count$count)
+  return(count)
+})
+
+# Create a table with the counts
+numbers_table <- data.frame(Number = numbers_words, Count = extracted_numbers)
+
+# Print the table
+print(numbers_table)
+
+```
+
 g. Which written number or numbers don't show up in any of the baby names?
 
+the numbers zero and seven showed up, with 7 showing up 49 times and zero showing up once
 
 
 
 h. Create a table that contains the names and their frequencies for the two least common written numbers.
+
 
 
 i. List out the names that contain no vowels (consider "y" to be a vowel).  
