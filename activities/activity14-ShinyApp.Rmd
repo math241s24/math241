@@ -17,6 +17,8 @@ Also, here's some template code to get you started on each app.
 ```{r, eval = FALSE}
 # Load libraries
 library(shiny)
+library(mosaic)
+library(tidyverse)
 
 # User interface
 ui <- fluidPage(
@@ -43,8 +45,6 @@ shinyApp(ui = ui, server = server)
 For this plot, create an app where you let the user pick which days of the week are on the plot using `checkboxGroupInput()`.  Look at [this page](https://shiny.rstudio.com/gallery/widget-gallery.html) for an example of this widget.  
 
 ```{r}
-library(mosaic)
-library(tidyverse)
 
 Births2015 %>%
   filter(wday %in% c("Sun", "Wed", "Fri")) %>%

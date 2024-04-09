@@ -11,15 +11,16 @@ urlcolor: blue
 # Do not modify this chunk.
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
+# Set a CRAN mirror explicitly
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+
+
+
 
 ```
 
-```{r}
-install.packages("wordcloud")
 
-
-
-```
 
 ```{r}
 # Put all necessary libraries here
@@ -116,19 +117,20 @@ d. Between your three tables in 1.a - 1.c, do any of the names show up on more t
 
 
 ```{r}
-# Perform inner joins between the tables
-joined_tables1 <- inner_join(top_female_names_2000_Z, top_female_names_2000_C_Z, by = "name") 
+joined_tables1 <- inner_join(top_female_names_2000_C_Z
+, top_female_names_2000_C_Z, by = "name") 
 
-joined_tables2 <- inner_join(top_female_names_2000_Z, top_female_names_2000_end_Z, by = "name")
+joined_tables2 <- inner_join(top_female_names_2000_C_Z
+, top_female_names_2000_end_Z, by = "name")
 
-joined_tables3 <- inner_join(top_female_names_2000_end_Z, top_female_names_2000_C_Z, by = "name") 
-# Select the common names
+joined_tables3 <- inner_join(top_female_names_2000_C_Z
+, top_female_names_2000_C_Z, by = "name") 
+
 common_names1 <- joined_tables1$name
 common_names2 <- joined_tables2$name
 common_names3 <- joined_tables3$name
 
 
-# Print the common names
 common_names1
 common_names2
 common_names3
@@ -202,39 +204,30 @@ h. Create a table that contains the names and their frequencies for the two leas
 ```{r}
 
 
-# Convert names to lowercase
 babynames_lower <- babynames %>%
   mutate(name = tolower(name))
 
-# Filter the dataset for the least common written numbers: zero and seven
 least_common_numbers <- c("zero", "seven")
 
-# Initialize an empty list to store results
 least_common_names <- list()
 
-# Loop through each least common number
 for (number in least_common_numbers) {
   # Filter the dataset for names containing the current number
   filtered_data <- babynames_lower %>%
     filter(str_detect(name, paste0("\\b", number, "\\b")))
   
-  # Summarize to get the frequency count for each name
   summarized_data <- filtered_data %>%
     group_by(name) %>%
     summarize(frequency = n()) %>%
     arrange(frequency)
   
-  # Select the top two rows
   top_names <- head(summarized_data, 2)
   
-  # Add the result to the list
   least_common_names[[number]] <- top_names
 }
 
-# Combine the results into a single table
 least_common_table <- do.call(rbind, least_common_names)
 
-# Print the table
 print(least_common_table)
 
 ```
@@ -246,22 +239,18 @@ i. List out the names that contain no vowels (consider "y" to be a vowel).
 ```{r}
 library(stringr)
 
-# Function to remove vowels from names (considering 'y' as a vowel)
 remove_vowels <- function(name) {
   str_remove_all(tolower(name), "[aeiouy]")
 }
 
-# Apply the function to remove vowels from all names
 babynames_processed <- babynames %>%
   mutate(processed_name = remove_vowels(name))
 
-# Group by processed names and count occurrences
 names_grouped_count <- babynames_processed %>%
   group_by(processed_name) %>%
   summarise(count = n()) %>%
   filter(processed_name != "")  # Filter out empty processed names
 
-# Print the grouped names and counts
 print(names_grouped_count)
 
 
@@ -280,11 +269,9 @@ wild <- gutenberg_download(215)
 a.  Create a tidy text dataset where you tokenize by words.
 
 ```{r}
-# Create a tidy text dataset by tokenizing words
 wild_tokens <- wild %>%
   unnest_tokens(word, text)
 
-# Remove stop words
 stop_words <- get_stopwords("en")
 wild_tokens <- wild_tokens %>%
   anti_join(stop_words)
@@ -294,7 +281,6 @@ wild_tokens <- wild_tokens %>%
 b. Find the frequency of the 20 most common words.  First, remove stop words.
 
 ```{r}
-# Find the frequency of the 20 most common words
 top_words <- wild_tokens %>%
   count(word, sort = TRUE) %>%
   slice(1:20)
@@ -307,7 +293,6 @@ c. Create a bar graph and a word cloud of the frequencies of the 20 most common 
 ```{r}
 
 
-# Create a bar graph of the frequencies of the 20 most common words
 ggplot(top_words, aes(x = reorder(word, n), y = n)) +
   geom_bar(stat = "identity", fill = "skyblue") +
   labs(title = "Top 20 Most Common Words in 'Call of the Wild'",
@@ -315,7 +300,6 @@ ggplot(top_words, aes(x = reorder(word, n), y = n)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# Create a word cloud of the frequencies of the 20 most common words
 
 library(RColorBrewer)
 pal <- brewer.pal(9, "Set1")
@@ -335,43 +319,31 @@ Notes:
 * `afinn` is a numeric score and should be handled differently than the categorical scores.
 
 ```{r}
-# Load required libraries
-library(tidyr)
-library(dplyr)
-library(tidytext)
 
-# Tokenize the text without removing stop words
+
 wild_tokens <- wild %>%
   unnest_tokens(word, text)
 
-# Add sentiments using AFINN lexicon
 wild_sentiment_afinn <- wild_tokens %>%
   inner_join(get_sentiments("afinn"), by = "word")
 
-# Add sentiments using Bing lexicon
 wild_sentiment_bing <- wild_tokens %>%
   inner_join(get_sentiments("bing"), by = "word")
 
-# Add sentiments using NRC lexicon
 wild_sentiment_nrc <- wild_tokens %>%
   inner_join(get_sentiments("nrc"), by = "word")
 
-#Convert sentiment to numeric score
 wild_sentiment_bing <- wild_sentiment_bing %>%
   mutate(score = ifelse(sentiment == "positive", 1, ifelse(sentiment == "negative", -1, 0)))
 
-# Summarize sentiment scores
 summary_bing <- summarise(wild_sentiment_bing, sentiment = sum(score))
 
-# Print the summary result
 print("Summary of Bing Sentiment:")
 print(summary_bing)
 
 
 
-# Print the summary results
-print("Summary of AFINN Sentiment:")
-print(summary_afinn)
+
 print("Summary of Bing Sentiment:")
 print(summary_bing)
 print("Summary of NRC Sentiment:")
@@ -387,21 +359,16 @@ e. If you didn't do so in 2.d, compute the average sentiment score of the text u
 
 
 ```{r}
-# Filter out NA values in sentiment scores
 wild_sentiment_afinn_filtered <- wild_sentiment_afinn %>%
   filter(!is.na(value))
 
-# Compute average sentiment score using AFINN
 avg_sentiment_afinn <- mean(wild_sentiment_afinn_filtered$value)
 
-# Print average sentiment score
 print(paste("Average sentiment score (AFINN):", avg_sentiment_afinn))
 
-# Get the words with the highest positive and negative impact
 top_positive_words <- head(wild_sentiment_afinn_filtered[order(wild_sentiment_afinn_filtered$value, decreasing = TRUE), ], 5)
 top_negative_words <- head(wild_sentiment_afinn_filtered[order(wild_sentiment_afinn_filtered$value), ], 5)
 
-# Print the top positive and negative words
 print("Top positive words:")
 print(top_positive_words$word)
 print("Top negative words:")
@@ -413,7 +380,6 @@ print(top_negative_words$word)
 f. You should have found that "no" was an important negative word in the sentiment score.  To know if that really makes sense, let's turn to the raw lines of text for context.  Pull out all of the lines that have the word "no" in them.  Make sure to not pull out extraneous lines (e.g., a line with the word "now").  
 
 ```{r}
-# Filter lines containing the word "no"
 lines_with_no <- wild %>%
   filter(grepl("\\bno\\b", text, ignore.case = TRUE))
 
@@ -448,32 +414,24 @@ wild_time <- wild %>%
 ```
 
 ```{r}
-# Load required libraries
-library(tidyr)
-library(dplyr)
-library(tidytext)
 
-# Tidy the data (but don't drop stop words)
+
 wild_tokens <- wild_time %>%
   unnest_tokens(word, text)
 
-# Add word sentiments using Bing lexicon
 wild_sentiment_bing <- wild_tokens %>%
   inner_join(get_sentiments("bing"), by = "word")
 
-# Count the frequency of sentiments by index
 sentiment_counts <- wild_sentiment_bing %>%
   count(index, sentiment)
 
-# Reshape the data to be wide with the count of the negative sentiments in one column and the positive in another, along with a column for index
+
 sentiment_counts_wide <- sentiment_counts %>%
   pivot_wider(names_from = sentiment, values_from = n, values_fill = 0)
 
-# Compute a sentiment column by subtracting the negative score from the positive
 sentiment_counts_wide <- sentiment_counts_wide %>%
   mutate(sentiment = positive - negative)
 
-# Print the resulting dataset
 print(sentiment_counts_wide)
 
 ```
@@ -483,8 +441,7 @@ print(sentiment_counts_wide)
 i. Create a plot of the sentiment scores as the text progresses.
 
 ```{r}
-# Create a plot of the sentiment scores as the text progresses
-library(ggplot2)
+
 
 ggplot(sentiment_counts_wide, aes(x = index, y = sentiment)) +
   geom_line() +
@@ -499,7 +456,7 @@ ggplot(sentiment_counts_wide, aes(x = index, y = sentiment)) +
 j. The choice of 45 lines per chunk was pretty arbitrary.  Try modifying the index value a few times and recreating the plot in i.  Based on your plots, what can you conclude about the sentiment of the novel as it progresses?
 
 ```{r}
-# Modify the index value and recreate the plot
+
 wild_time_modified <- wild %>%
   mutate(line = row_number(), index = floor(line/30) + 1) 
 
@@ -518,7 +475,7 @@ sentiment_counts_wide_modified <- sentiment_counts_modified %>%
 sentiment_counts_wide_modified <- sentiment_counts_wide_modified %>%
   mutate(sentiment = positive - negative)
 
-# Create a plot of the sentiment scores with modified index values
+
 ggplot(sentiment_counts_wide_modified, aes(x = index, y = sentiment)) +
   geom_line() +
   labs(title = "Sentiment Scores as Text Progresses (Modified Index)",
@@ -531,15 +488,12 @@ ggplot(sentiment_counts_wide_modified, aes(x = index, y = sentiment)) +
 k. Let's look at the bigrams (2 consecutive words).  Tokenize the text by bigrams.  
 
 ```{r}
-# Load required libraries
-library(dplyr)
-library(tidytext)
 
-# Tokenize the text by bigrams
+
+
 wild_bigrams <- wild %>%
   unnest_tokens(bigram, text, token = "ngrams", n = 2)
 
-# View the first few rows of the bigrams
 head(wild_bigrams)
 
 ```
@@ -552,20 +506,16 @@ l.  Produce a sorted table that counts the frequency of each bigram and notice t
 library(dplyr)
 library(tidytext)
 
-# Tokenize the text by bigrams
 wild_bigrams <- wild %>%
   unnest_tokens(bigram, text, token = "ngrams", n = 2)
 
-# Remove stop words
 stop_words <- get_stopwords("en")
 wild_bigrams <- wild_bigrams %>%
   anti_join(stop_words, by = c("bigram" = "word"))
 
-# Count the frequency of each bigram
 bigram_counts <- wild_bigrams %>%
   count(bigram, sort = TRUE)
 
-# View the sorted table of bigram frequencies
 print("Sorted table of bigram frequencies:")
 print(bigram_counts)
 
